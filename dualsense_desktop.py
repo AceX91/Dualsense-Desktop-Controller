@@ -117,6 +117,7 @@ class Mapper:
         self.alt_held_for_switch = False
         self.l3 = self.r3 = False
         self.ps_down_at = None
+        self._ps_ai_fired = False
         self.options_down = False
         self.mode_override = self.read_mode_file()
         self.in_game = False
@@ -215,6 +216,14 @@ class Mapper:
     def do_ai_default(self):
         self.log("PS -> open default AI app")
         run(resolve_ai_cmd())
+    def do_app_menu(self):
+        self.log("PS short -> app menu")
+        self.tap(ecodes.KEY_LEFTMETA)
+    def fire_ai_on_hold(self):
+        if self.ps_down_at and not self._ps_ai_fired and not self.options_down:
+            if time.time() - self.ps_down_at >= 0.75:
+                self._ps_ai_fired = True
+                self.do_ai_default()
     def toggle_mode(self):
         self.in_game = not self.in_game
         self.log("mode toggled ->", "GAME (passthrough)" if self.in_game else "DESKTOP")
@@ -291,10 +300,12 @@ class Mapper:
         elif ev.code == E_.BTN_MODE:
             if pressed:
                 self.ps_down_at = time.time()
+                self._ps_ai_fired = False
+                asyncio.get_running_loop().call_later(0.8, self.fire_ai_on_hold)
             else:
-                if self.ps_down_at and time.time() - self.ps_down_at < 1.0 \
+                if not self._ps_ai_fired and self.ps_down_at and time.time() - self.ps_down_at < 0.8 \
                         and not self.options_down:
-                    self.do_ai_default()
+                    self.do_app_menu()
                 self.ps_down_at = None
             self.check_mode_chord(pressed, ev.code)
         elif ev.code == E_.BTN_START:

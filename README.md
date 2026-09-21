@@ -27,7 +27,8 @@ Mapping in desktop mode:
 | Square | Forward (Alt+Right) |
 | R2 | Enter (press and hold supported) |
 | L2 | Switch apps (Alt-Tab, hold to cycle) |
-| PS button (short press) | Open default AI app (see Default AI app section) |
+| PS button (tap) | Open application menu (Super) |
+| PS button (hold 0.8s) | Open default AI app (see Default AI app section) |
 | L3 + R3 together | Toggle mic mute (`wpctl`) |
 | PS + Options (hold 1s) | Toggle desktop / game mode |
 
@@ -104,7 +105,7 @@ sudo evtest
 ~/.local/bin/dualsense_desktop.py --debug
 ```
 
-You should see `grabbed (exclusive)`. Move the left stick and the cursor should move. Press R1 for click, Triangle to close the focused window, and PS to open your default AI app.
+You should see `grabbed (exclusive)`. Move the left stick and the cursor should move. Press R1 for click, Triangle to close the focused window, tap PS for the app menu, hold PS for your default AI app.
 
 5. Enable autostart:
 
@@ -152,7 +153,7 @@ echo "uwsm-app alacritty -e claude" > ~/.config/dualsense-omarchy/ai-app
 2. If that file is missing, the daemon checks `AI_CANDIDATES` in order (`opencode`, `claude`, `gemini`, `aider`, `codex`, `ollama`) and launches the first binary found on `PATH` inside alacritty.
 3. If none is found, it falls back to `uwsm-app alacritty -e opencode`.
 
-Set your preferred default once, then PS just works.
+Set your preferred default once, then hold PS and it opens.
 
 Restart the service after edits:
 
