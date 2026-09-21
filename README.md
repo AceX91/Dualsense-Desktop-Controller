@@ -184,10 +184,55 @@ The stock `hid-playstation` driver handles the DualSense mic button inside the k
 
 ## Files
 
-- `dualsense_desktop.py`: the mapper daemon (comments and blank lines stripped for compactness)
+- `dualsense_desktop.py`: the mapper daemon for Omarchy Linux (comments and blank lines stripped for compactness)
+- `dualsense_desktop_windows.py`: the replica mapper for Windows (same scheme, Windows native keys)
+- `requirements-windows.txt`: Python packages for the Windows replica
 - `dualsense-desktop.service`: systemd user unit
 - `99-dualsense.rules`: udev permissions for uinput and DualSense nodes
 - `README.md`: this file
+
+## Windows port
+
+`dualsense_desktop_windows.py` mirrors the Linux daemon on Windows 10/11 using `pygame` for pad input, `pynput` for mouse and keyboard output, and `psutil` for game detection. No admin rights needed. No kernel or driver install needed, Windows pairs with DualSense natively over USB or Bluetooth.
+
+Install on Windows:
+
+```powershell
+pip install -r requirements-windows.txt
+python dualsense_desktop_windows.py --list
+python dualsense_desktop_windows.py --debug
+```
+
+Use `--list` to see joystick indexes, then `python dualsense_desktop_windows.py --index 0` if the wrong pad is picked. To start with Windows, drop a shortcut calling `pythonw <path>\dualsense_desktop_windows.py` into `shell:startup`.
+
+Mapping on Windows (same controls, Windows native keys):
+
+| Control | Linux | Windows |
+|---|---|---|
+| Left stick | Move mouse | Move mouse (same dual stick sensitivity math) |
+| Right stick | Sensitivity modifier | Sensitivity modifier (same math) |
+| Trackpad click | Left click | Left click |
+| Trackpad click hold 0.8s | n/a | Show desktop (Win+D toggle) |
+| R1 / L1 | Left / right click | Left / right click |
+| D-pad | Tab / Shift+Tab / Up / Down | Tab / Shift+Tab / Up / Down |
+| Cross tap / hold | Win+Alt+F / Win+Tab | F11 fullscreen / Win+Tab Task View |
+| Circle tap / hold | Alt+Left / Win+Enter | Alt+Left / open Windows Terminal |
+| Triangle | Win+W close | Alt+F4 close |
+| Square | Alt+Right forward | Alt+Right forward |
+| Create | Win+Esc | Win+X Quick Link menu |
+| Options | Win+Shift+F | Win+E File Explorer |
+| R2 / L2 | Enter / Alt-Tab | Enter / Alt-Tab |
+| PS tap / hold | Win+Space / Win+Shift+Return | Start menu / Search (Win+S) |
+| L3+R3 | Mic mute via wpctl | Mic mute via pycaw |
+| Game mode | hyprctl window class | Foreground exe in `GAME_EXES` |
+
+Windows limitations, stated plainly:
+
+- Trackpad motion, two finger scroll, and flick gestures are not available. `pygame`/SDL exposes the DualSense touchpad click only, not finger positions. If you need trackpad mouse on Windows, run DS4Windows alongside and disable the trackpad click mapping in this script.
+- The physical mic button is handled by the controller firmware and is invisible to Windows apps too, so L3+R3 stays the mic toggle. It needs `pycaw` (in requirements). Without it you get a `[mic failed]` log line and nothing else breaks.
+- Game mode suspends our output while a `GAME_EXES` process is focused, and games always see the real pad because nothing is grabbed. Add your game exe names to `GAME_EXES` at the top of the script.
+- Close Steam Input, DS4Windows pad mapping, or ReWASD profiles for the DualSense while testing, or inputs will double up.
+- The shared `~/.config/dualsense-omarchy/mode` override file also works on Windows (`%USERPROFILE%\.config\dualsense-omarchy\mode` containing `desktop`, `game`, or deleted for auto).
 
 ## Uninstall
 
