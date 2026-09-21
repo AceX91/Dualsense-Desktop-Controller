@@ -1,6 +1,10 @@
 # Ps5Controller-Desktop-Controller
 
-Use a PS5 DualSense controller as a desktop mouse and keyboard on Omarchy (Arch + Hyprland/Wayland), with automatic passthrough when you are in a game.
+Use a PS5 DualSense controller as a desktop mouse and keyboard on Omarchy (Arch + Hyprland/Wayland) and on Windows, with automatic passthrough when you are in a game.
+
+Pick your setup: [Omarchy (Linux)](#install) | [Windows](#windows-port)
+
+Direct link to the Windows section: https://github.com/AceX91/Dualsense-Desktop-Controller#windows-port
 
 ## What it does
 
