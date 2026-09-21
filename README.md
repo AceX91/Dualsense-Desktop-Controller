@@ -193,6 +193,7 @@ The stock `hid-playstation` driver handles the DualSense mic button inside the k
 - `requirements-windows.txt`: Python packages for the Windows replica
 - `dualsense-desktop.service`: systemd user unit
 - `99-dualsense.rules`: udev permissions for uinput and DualSense nodes
+- `LICENSE`: Apache License 2.0
 - `README.md`: this file
 
 ## Windows port
@@ -246,3 +247,7 @@ rm ~/.local/bin/dualsense_desktop.py ~/.config/systemd/user/dualsense-desktop.se
 sudo rm /etc/udev/rules.d/99-dualsense.rules
 sudo udevadm control --reload-rules
 ```
+
+## License
+
+Licensed under the Apache License, Version 2.0. See `LICENSE` for the full text.
