@@ -21,7 +21,10 @@ Mapping in desktop mode:
 | L1 | Right click |
 | D-pad left / right | Shift+Tab / Tab (focus hop) |
 | D-pad up / down | Up / Down arrow |
-| Cross (X) | Home / launcher (Super tap) |
+| Cross (X tap) | Fullscreen (Win+Alt+F) |
+| Cross (X hold 0.8s) | Switch workspace (Win+Tab) |
+| Create (tap) | System menu (Win+Esc) |
+| Options (tap) | File manager (Win+Shift+F) |
 | Circle (tap) | Back (Alt+Left) |
 | Circle (hold 0.8s) | Win+Return (Super+Enter) |
 | Triangle | Close window (Super+W plus `hyprctl dispatch killactive` fallback) |
@@ -138,7 +141,7 @@ rm ~/.config/dualsense-omarchy/mode
 
 Removing the file returns to auto mode, which checks the focused Hyprland window.
 
-- Or hold PS + Options for about 1 second to toggle modes at runtime.
+- Or hold PS + Options for about 1 second to toggle modes at runtime. Options tap is ignored while PS is held so the chord never opens the file manager by accident.
 
 ## Configuration
 

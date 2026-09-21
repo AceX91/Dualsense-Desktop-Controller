@@ -106,6 +106,9 @@ class Mapper:
         self._ps_ai_fired = False
         self.circle_down_at = None
         self._circle_term_fired = False
+        self.cross_down_at = None
+        self._cross_ws_fired = False
+        self.options_down_at = None
         self.options_down = False
         self.mode_override = self.read_mode_file()
         self.in_game = False
@@ -125,7 +128,7 @@ class Mapper:
                 ecodes.KEY_TAB, ecodes.KEY_ENTER, ecodes.KEY_ESC,
                 ecodes.KEY_UP, ecodes.KEY_DOWN, ecodes.KEY_LEFT, ecodes.KEY_RIGHT,
                 ecodes.KEY_LEFTALT, ecodes.KEY_LEFTSHIFT, ecodes.KEY_LEFTMETA,
-                ecodes.KEY_Q, ecodes.KEY_W, ecodes.KEY_SPACE, ecodes.KEY_F20,
+                ecodes.KEY_Q, ecodes.KEY_W, ecodes.KEY_SPACE, ecodes.KEY_F, ecodes.KEY_F20,
             ],
         }
         self.ui_mouse = UInput(mouse_caps, name="dualsense-virtual-mouse")
@@ -163,9 +166,18 @@ class Mapper:
             self.ui_mouse.write(ecodes.EV_REL, ecodes.REL_Y, int(dy))
         if dx or dy:
             self.ui_mouse.syn()
-    def do_home(self):
-        self.log("Cross -> Home (Super)")
-        self.tap(ecodes.KEY_LEFTMETA)
+    def do_fullscreen(self):
+        self.log("Cross -> win+alt+f")
+        self.tap(ecodes.KEY_LEFTMETA, ecodes.KEY_LEFTALT, ecodes.KEY_F)
+    def do_workspace(self):
+        self.log("Cross hold -> win+tab")
+        self.tap(ecodes.KEY_LEFTMETA, ecodes.KEY_TAB)
+    def do_sysmenu(self):
+        self.log("Create -> win+esc")
+        self.tap(ecodes.KEY_LEFTMETA, ecodes.KEY_ESC)
+    def do_files(self):
+        self.log("Options -> win+shift+f")
+        self.tap(ecodes.KEY_LEFTMETA, ecodes.KEY_LEFTSHIFT, ecodes.KEY_F)
     def do_back(self):
         self.log("Circle -> Back")
         self.tap(ecodes.KEY_LEFTALT, ecodes.KEY_LEFT)
@@ -220,6 +232,11 @@ class Mapper:
             if time.time() - self.circle_down_at >= 0.75:
                 self._circle_term_fired = True
                 self.do_terminal()
+    def fire_cross_on_hold(self):
+        if self.cross_down_at and not self._cross_ws_fired:
+            if time.time() - self.cross_down_at >= 0.75:
+                self._cross_ws_fired = True
+                self.do_workspace()
     def toggle_mode(self):
         self.in_game = not self.in_game
         self.log("mode toggled ->", "GAME (passthrough)" if self.in_game else "DESKTOP")
@@ -281,8 +298,15 @@ class Mapper:
             self.mouse_btn(E_.BTN_LEFT, 1 if pressed else 0)
         elif ev.code == E_.BTN_TL:
             self.mouse_btn(E_.BTN_RIGHT, 1 if pressed else 0)
-        elif ev.code == E_.BTN_SOUTH and pressed:
-            self.do_home()
+        elif ev.code == E_.BTN_SOUTH:
+            if pressed:
+                self.cross_down_at = time.time()
+                self._cross_ws_fired = False
+                asyncio.get_running_loop().call_later(0.8, self.fire_cross_on_hold)
+            else:
+                if not self._cross_ws_fired and self.cross_down_at and time.time() - self.cross_down_at < 0.8:
+                    self.do_fullscreen()
+                self.cross_down_at = None
         elif ev.code == E_.BTN_EAST:
             if pressed:
                 self.circle_down_at = time.time()
@@ -312,6 +336,12 @@ class Mapper:
                 self.ps_down_at = None
             self.check_mode_chord(pressed, ev.code)
         elif ev.code == E_.BTN_START:
+            if pressed:
+                self.options_down_at = time.time()
+            else:
+                if self.ps_down_at is None and self.options_down_at and time.time() - self.options_down_at < 0.8:
+                    self.do_files()
+                self.options_down_at = None
             self.options_down = pressed
             self.check_mode_chord(pressed, ev.code)
         elif ev.code == E_.BTN_THUMBL:
@@ -321,7 +351,8 @@ class Mapper:
             self.r3 = pressed
             self.check_mic_chord()
         elif ev.code == E_.BTN_SELECT and pressed:
-            pass
+            if self.ps_down_at is None:
+                self.do_sysmenu()
     def set_l2(self, pressed):
         if pressed and not self.l2_held:
             self.l2_held = True
