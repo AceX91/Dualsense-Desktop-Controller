@@ -27,8 +27,8 @@ Mapping in desktop mode:
 | Square | Forward (Alt+Right) |
 | R2 | Enter (press and hold supported) |
 | L2 | Switch apps (Alt-Tab, hold to cycle) |
-| PS button (tap) | Open application menu (Super) |
-| PS button (hold 0.8s) | Open default AI app (see Default AI app section) |
+| PS button (tap) | Win+Space (Super+Space) |
+| PS button (hold 0.8s) | Open Chromium |
 | L3 + R3 together | Toggle mic mute (`wpctl`) |
 | PS + Options (hold 1s) | Toggle desktop / game mode |
 
@@ -105,7 +105,7 @@ sudo evtest
 ~/.local/bin/dualsense_desktop.py --debug
 ```
 
-You should see `grabbed (exclusive)`. Move the left stick and the cursor should move. Press R1 for click, Triangle to close the focused window, tap PS for the app menu, hold PS for your default AI app.
+You should see `grabbed (exclusive)`. Move the left stick and the cursor should move. Press R1 for click, Triangle to close the focused window, tap PS for Win+Space, hold PS for Chromium.
 
 5. Enable autostart:
 
@@ -137,23 +137,12 @@ Edit the top of `dualsense_desktop.py`:
 - `DEADZONE`: stick deadzone from 0 to 1
 - `TRACKPAD_SENS`: trackpad movement multiplier
 - `GAME_CLASSES`: Hyprland window classes treated as games for auto passthrough
-- `AI_CANDIDATES`: terminal AI binaries checked in order when no custom AI app is set
+- `CHROMIUM_CMD`: command run on PS hold (defaults to `uwsm-app chromium`)
 
-## Default AI app
+## PS button
 
-The PS button opens whatever AI app is set as default on your system:
-
-1. If `~/.config/dualsense-omarchy/ai-app` exists, its content is used as the full Hyprland exec command. Example:
-
-```bash
-echo "uwsm-app alacritty -e opencode" > ~/.config/dualsense-omarchy/ai-app
-echo "uwsm-app alacritty -e claude" > ~/.config/dualsense-omarchy/ai-app
-```
-
-2. If that file is missing, the daemon checks `AI_CANDIDATES` in order (`opencode`, `claude`, `gemini`, `aider`, `codex`, `ollama`) and launches the first binary found on `PATH` inside alacritty.
-3. If none is found, it falls back to `uwsm-app alacritty -e opencode`.
-
-Set your preferred default once, then hold PS and it opens.
+- Tap (under 0.8s): sends Win+Space (Super+Space).
+- Hold (0.8s): opens Chromium via `hyprctl dispatch exec "uwsm-app chromium"`. Change `CHROMIUM_CMD` at the top of the script to open something else.
 
 Restart the service after edits:
 

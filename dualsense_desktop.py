@@ -3,7 +3,6 @@ import argparse
 import asyncio
 import json
 import math
-import shutil
 import subprocess
 import sys
 import time
@@ -15,20 +14,8 @@ GAME_CLASSES = {
     "retroarch", "dolphin-emu", "pcsx2", "yuzu", "ryujinx",
     "minecraft", "cs2", "dota2",
 }
-AI_APP_FILE = Path.home() / ".config" / "dualsense-omarchy" / "ai-app"
 HIDDEN_FILE = Path.home() / ".config" / "dualsense-omarchy" / "hidden.json"
-AI_CANDIDATES = ["opencode", "claude", "gemini", "aider", "codex", "ollama"]
-def resolve_ai_cmd():
-    try:
-        custom = AI_APP_FILE.read_text().strip()
-        if custom:
-            return ["hyprctl", "dispatch", "exec", custom]
-    except FileNotFoundError:
-        pass
-    for bin in AI_CANDIDATES:
-        if shutil.which(bin):
-            return ["hyprctl", "dispatch", "exec", f"uwsm-app alacritty -e {bin}"]
-    return ["hyprctl", "dispatch", "exec", "uwsm-app alacritty -e opencode"]
+CHROMIUM_CMD = ["hyprctl", "dispatch", "exec", "uwsm-app chromium"]
 MAX_SPEED = 1400.0
 DEADZONE = 0.12
 TRACKPAD_SENS = 1.4
@@ -137,7 +124,7 @@ class Mapper:
                 ecodes.KEY_TAB, ecodes.KEY_ENTER, ecodes.KEY_ESC,
                 ecodes.KEY_UP, ecodes.KEY_DOWN, ecodes.KEY_LEFT, ecodes.KEY_RIGHT,
                 ecodes.KEY_LEFTALT, ecodes.KEY_LEFTSHIFT, ecodes.KEY_LEFTMETA,
-                ecodes.KEY_Q, ecodes.KEY_W, ecodes.KEY_F20,
+                ecodes.KEY_Q, ecodes.KEY_W, ecodes.KEY_SPACE, ecodes.KEY_F20,
             ],
         }
         self.ui_mouse = UInput(mouse_caps, name="dualsense-virtual-mouse")
@@ -213,17 +200,17 @@ class Mapper:
     def do_mic_toggle(self):
         self.log("mic toggle -> wpctl")
         run(["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", "toggle"])
-    def do_ai_default(self):
-        self.log("PS -> open default AI app")
-        run(resolve_ai_cmd())
+    def do_chromium(self):
+        self.log("PS hold -> open chromium")
+        run(CHROMIUM_CMD)
     def do_app_menu(self):
-        self.log("PS short -> app menu")
-        self.tap(ecodes.KEY_LEFTMETA)
+        self.log("PS short -> win+space")
+        self.tap(ecodes.KEY_LEFTMETA, ecodes.KEY_SPACE)
     def fire_ai_on_hold(self):
         if self.ps_down_at and not self._ps_ai_fired and not self.options_down:
             if time.time() - self.ps_down_at >= 0.75:
                 self._ps_ai_fired = True
-                self.do_ai_default()
+                self.do_chromium()
     def toggle_mode(self):
         self.in_game = not self.in_game
         self.log("mode toggled ->", "GAME (passthrough)" if self.in_game else "DESKTOP")
