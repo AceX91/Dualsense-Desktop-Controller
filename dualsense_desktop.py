@@ -16,6 +16,7 @@ GAME_CLASSES = {
     "minecraft", "cs2", "dota2",
 }
 AI_APP_FILE = Path.home() / ".config" / "dualsense-omarchy" / "ai-app"
+HIDDEN_FILE = Path.home() / ".config" / "dualsense-omarchy" / "hidden.json"
 AI_CANDIDATES = ["opencode", "claude", "gemini", "aider", "codex", "ollama"]
 def resolve_ai_cmd():
     try:
@@ -45,6 +46,43 @@ def hypr_active_class():
         return str(info.get("class", "") or "").lower(), str(info.get("title", "") or "")
     except Exception:
         return "", ""
+def hypr_json(cmd):
+    try:
+        out = subprocess.check_output(cmd, timeout=3, stderr=subprocess.DEVNULL)
+        return json.loads(out)
+    except Exception:
+        return None
+def show_hide_all():
+    try:
+        ws = hypr_json(["hyprctl", "activeworkspace", "-j"]) or {}
+        wid = ws.get("id", 1)
+        clients = hypr_json(["hyprctl", "clients", "-j"]) or []
+        keep = []
+        for c in clients:
+            w = c.get("workspace", {})
+            if w.get("id") == wid and w.get("name", "") != "special:dualsense-hide":
+                if c.get("address"):
+                    keep.append({"address": c["address"], "ws": wid})
+        HIDDEN_FILE.write_text(json.dumps(keep))
+        for k in keep:
+            subprocess.Popen(["hyprctl", "dispatch", f"movetoworkspacesilent special:dualsense-hide,address:{k['address']}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception as e:
+        print(f"[showdesktop hide failed] {e}", file=sys.stderr)
+def show_restore_all():
+    try:
+        raw = HIDDEN_FILE.read_text()
+        keep = json.loads(raw) if raw.strip() else []
+    except FileNotFoundError:
+        return
+    except Exception as e:
+        print(f"[showdesktop restore failed] {e}", file=sys.stderr)
+        return
+    for k in keep:
+        subprocess.Popen(["hyprctl", "dispatch", f"movetoworkspace {k.get('ws', 1)},address:{k['address']}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        HIDDEN_FILE.unlink()
+    except Exception:
+        pass
 def norm_stick(v, center=128.0, half=127.0):
     n = (v - center) / half
     return max(-1.0, min(1.0, n))
@@ -83,6 +121,12 @@ class Mapper:
         self.mode_override = self.read_mode_file()
         self.in_game = False
         self.tp_last = None
+        self._mt_slots = {}
+        self._mt_cur = 0
+        self._mt_avg_last = None
+        self._mt_t_last = 0.0
+        self._mt_dy_acc = 0.0
+        self._mt_gesture_done = False
         mouse_caps = {
             ecodes.EV_REL: [ecodes.REL_X, ecodes.REL_Y, ecodes.REL_WHEEL],
             ecodes.EV_KEY: [ecodes.BTN_LEFT, ecodes.BTN_RIGHT, ecodes.BTN_MIDDLE],
@@ -291,16 +335,78 @@ class Mapper:
     def handle_touchpad(self, ev):
         E = ecodes
         if ev.type == E.EV_ABS:
-            if ev.code in (E.ABS_MT_POSITION_X, E.ABS_X):
-                x = ev.value
-                y = getattr(self, "_tp_y", None)
-                self._tp_x = x
-                self.emit_trackpad_move()
+            if ev.code == E.ABS_MT_SLOT:
+                self._mt_cur = ev.value
+            elif ev.code == E.ABS_MT_TRACKING_ID:
+                s = self._mt_slots.get(self._mt_cur, {"on": False, "x": None, "y": None})
+                s["on"] = ev.value != -1
+                if ev.value == -1:
+                    s["x"] = None
+                    s["y"] = None
+                self._mt_slots[self._mt_cur] = s
+                self._mt_avg_last = None
+                self._mt_dy_acc = 0.0
+                self._mt_gesture_done = False
+                self.tp_last = None
+            elif ev.code in (E.ABS_MT_POSITION_X, E.ABS_X):
+                s = self._mt_slots.get(self._mt_cur, {"on": True, "x": None, "y": None})
+                s["on"] = True
+                s["x"] = ev.value
+                self._mt_slots[self._mt_cur] = s
+                if len([v for v in self._mt_slots.values() if v["on"]]) < 2:
+                    self._tp_x = ev.value
+                    self.emit_trackpad_move()
             elif ev.code in (E.ABS_MT_POSITION_Y, E.ABS_Y):
-                self._tp_y = ev.value
-                self.emit_trackpad_move()
+                s = self._mt_slots.get(self._mt_cur, {"on": True, "x": None, "y": None})
+                s["on"] = True
+                s["y"] = ev.value
+                self._mt_slots[self._mt_cur] = s
+                if len([v for v in self._mt_slots.values() if v["on"]]) < 2:
+                    self._tp_y = ev.value
+                    self.emit_trackpad_move()
         elif ev.type == E.EV_KEY and ev.code == E.BTN_LEFT:
             self.mouse_btn(E.BTN_LEFT, 1 if ev.value else 0)
+        elif ev.type == E.EV_SYN:
+            self.emit_touch_gesture()
+    def emit_touch_gesture(self):
+        live = [v for v in self._mt_slots.values() if v["on"] and v["x"] is not None and v["y"] is not None]
+        now = time.time()
+        if len(live) != 2:
+            self._mt_avg_last = None
+            self._mt_dy_acc = 0.0
+            self._mt_t_last = now
+            return
+        ax = sum(v["x"] for v in live) / 2.0
+        ay = sum(v["y"] for v in live) / 2.0
+        if self._mt_avg_last is None:
+            self._mt_avg_last = (ax, ay)
+            self._mt_t_last = now
+            self._mt_dy_acc = 0.0
+            return
+        dx = ax - self._mt_avg_last[0]
+        dy = ay - self._mt_avg_last[1]
+        dt = max(0.005, now - self._mt_t_last)
+        self._mt_avg_last = (ax, ay)
+        self._mt_t_last = now
+        if abs(dx) > 400 or abs(dy) > 400:
+            return
+        self._mt_dy_acc += dy
+        vel = dy / dt
+        if not self._mt_gesture_done and abs(dy) > 60 and abs(vel) > 1400 and abs(dy) > 2 * abs(dx) and dt < 0.35:
+            if dy > 0:
+                self.log("touch flick down -> minimize all")
+                show_hide_all()
+            else:
+                self.log("touch flick up -> restore all")
+                show_restore_all()
+            self._mt_gesture_done = True
+            self._mt_dy_acc = 0.0
+            return
+        while abs(self._mt_dy_acc) >= 30.0:
+            step = -1 if self._mt_dy_acc > 0 else 1
+            self.ui_mouse.write(ecodes.EV_REL, ecodes.REL_WHEEL, step)
+            self.ui_mouse.syn()
+            self._mt_dy_acc += 30.0 * step
     def emit_trackpad_move(self):
         x = getattr(self, "_tp_x", None)
         y = getattr(self, "_tp_y", None)

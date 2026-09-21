@@ -12,8 +12,11 @@ Mapping in desktop mode:
 |---|---|
 | Left stick | Move mouse (base velocity) |
 | Right stick | Sensitivity modifier for left stick |
-| Trackpad move | Move mouse |
+| Trackpad move (1 finger) | Move mouse |
 | Trackpad click | Left click |
+| Trackpad 2 finger vertical move | Scroll up / down (REL_WHEEL) |
+| Trackpad 2 finger fast flick down | Minimize all (hide workspace windows) |
+| Trackpad 2 finger fast flick up | Restore hidden windows |
 | R1 | Left click |
 | L1 | Right click |
 | D-pad left / right | Shift+Tab / Tab (focus hop) |
@@ -33,6 +36,17 @@ Right stick sensitivity logic:
 - Same direction as left stick: up to 2x speed
 - Opposite direction: 0.5x speed
 - Perpendicular (example: left + down): diagonal move, speed scaled by right stick deflection
+
+## Trackpad gestures
+
+The kernel driver exposes at most 2 touch contacts for the DualSense pad, so true 3 finger detection is not possible. The requested 3 finger down/up actions are mapped to 2 finger fast flick down/up instead:
+
+- 2 fingers moving together slowly (vertical): scroll. Every 30 device units emits one `REL_WHEEL` tick, finger down scrolls down.
+- 2 finger fast flick down (over 60 units in under 0.35s with high velocity and mostly vertical): minimize all. Windows on the active workspace are moved to `special:dualsense-hide` and their addresses saved to `~/.config/dualsense-omarchy/hidden.json`.
+- 2 finger fast flick up: restore. Saved windows are moved back to their workspace and the file is removed.
+- 1 finger: normal mouse move. Trackpad click still sends left click.
+
+Tune thresholds at the top of the gesture code (30 units per wheel tick, 60 unit flick distance, 0.35s window).
 
 ## What is used
 
