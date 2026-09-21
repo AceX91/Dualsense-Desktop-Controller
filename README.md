@@ -23,13 +23,13 @@ Mapping in desktop mode:
 | D-pad up / down | Up / Down arrow |
 | Cross (X) | Home / launcher (Super tap) |
 | Circle (tap) | Back (Alt+Left) |
-| Circle (hold 0.8s) | Open terminal (first found: ghostty, alacritty, kitty, foot) |
+| Circle (hold 0.8s) | Win+Return (Super+Enter) |
 | Triangle | Close window (Super+W plus `hyprctl dispatch killactive` fallback) |
 | Square | Forward (Alt+Right) |
 | R2 | Enter (press and hold supported) |
 | L2 | Switch apps (Alt-Tab, hold to cycle) |
 | PS button (tap) | Win+Space (Super+Space) |
-| PS button (hold 0.8s) | Open Chromium |
+| PS button (hold 0.8s) | Win+Shift+Return (Super+Shift+Enter) |
 | L3 + R3 together | Toggle mic mute (`wpctl`) |
 | PS + Options (hold 1s) | Toggle desktop / game mode |
 
@@ -106,7 +106,7 @@ sudo evtest
 ~/.local/bin/dualsense_desktop.py --debug
 ```
 
-You should see `grabbed (exclusive)`. Move the left stick and the cursor should move. Press R1 for click, Triangle to close the focused window, tap PS for Win+Space, hold PS for Chromium.
+You should see `grabbed (exclusive)`. Move the left stick and the cursor should move. Press R1 for click, Triangle to close the focused window, tap PS for Win+Space, hold PS for Win+Shift+Return, hold Circle for Win+Return.
 
 5. Enable autostart:
 
@@ -138,13 +138,13 @@ Edit the top of `dualsense_desktop.py`:
 - `DEADZONE`: stick deadzone from 0 to 1
 - `TRACKPAD_SENS`: trackpad movement multiplier
 - `GAME_CLASSES`: Hyprland window classes treated as games for auto passthrough
-- `CHROMIUM_CMD`: command run on PS hold (defaults to `uwsm-app chromium`)
-- `TERMINAL_CANDIDATES`: terminal binaries checked in order on Circle hold (defaults to ghostty, alacritty, kitty, foot)
 
-## PS button
+## PS and Circle holds
 
-- Tap (under 0.8s): sends Win+Space (Super+Space).
-- Hold (0.8s): opens Chromium via `hyprctl dispatch exec "uwsm-app chromium"`. Change `CHROMIUM_CMD` at the top of the script to open something else.
+- Tap PS (under 0.8s): sends Win+Space (Super+Space).
+- Hold PS (0.8s): sends Win+Shift+Return (Super+Shift+Enter).
+- Tap Circle: goes back (Alt+Left).
+- Hold Circle (0.8s): sends Win+Return (Super+Enter).
 
 Restart the service after edits:
 

@@ -3,7 +3,6 @@ import argparse
 import asyncio
 import json
 import math
-import shutil
 import subprocess
 import sys
 import time
@@ -16,13 +15,6 @@ GAME_CLASSES = {
     "minecraft", "cs2", "dota2",
 }
 HIDDEN_FILE = Path.home() / ".config" / "dualsense-omarchy" / "hidden.json"
-CHROMIUM_CMD = ["hyprctl", "dispatch", "exec", "uwsm-app chromium"]
-TERMINAL_CANDIDATES = ["ghostty", "alacritty", "kitty", "foot"]
-def resolve_term_cmd():
-    for bin in TERMINAL_CANDIDATES:
-        if shutil.which(bin):
-            return ["hyprctl", "dispatch", "exec", f"uwsm-app {bin}"]
-    return ["hyprctl", "dispatch", "exec", "uwsm-app alacritty"]
 MAX_SPEED = 1400.0
 DEADZONE = 0.12
 TRACKPAD_SENS = 1.4
@@ -210,11 +202,11 @@ class Mapper:
         self.log("mic toggle -> wpctl")
         run(["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", "toggle"])
     def do_chromium(self):
-        self.log("PS hold -> open chromium")
-        run(CHROMIUM_CMD)
+        self.log("PS hold -> win+shift+return")
+        self.tap(ecodes.KEY_LEFTMETA, ecodes.KEY_LEFTSHIFT, ecodes.KEY_ENTER)
     def do_terminal(self):
-        self.log("Circle hold -> terminal")
-        run(resolve_term_cmd())
+        self.log("Circle hold -> win+return")
+        self.tap(ecodes.KEY_LEFTMETA, ecodes.KEY_ENTER)
     def do_app_menu(self):
         self.log("PS short -> win+space")
         self.tap(ecodes.KEY_LEFTMETA, ecodes.KEY_SPACE)
