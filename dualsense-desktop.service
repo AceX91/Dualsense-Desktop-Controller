@@ -1,14 +1,14 @@
 [Unit]
 Description=DualSense desktop mapper (Omarchy/Hyprland)
-After=graphical-session.target
-PartOf=graphical-session.target
+After=default.target
+PartOf=default.target
 
 [Service]
 Type=simple
 ExecStart=%h/.local/bin/dualsense_desktop.py
-Restart=on-failure
+Restart=always
 RestartSec=2
 Environment=PYTHONUNBUFFERED=1
 
 [Install]
-WantedBy=graphical-session.target
+WantedBy=default.target

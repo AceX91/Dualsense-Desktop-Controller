@@ -108,11 +108,21 @@ sudo evtest
 
 You should see `grabbed (exclusive)`. Move the left stick and the cursor should move. Press R1 for click, Triangle to close the focused window, tap PS for Win+Space, hold PS for Win+Shift+Return, hold Circle for Win+Return.
 
-5. Enable autostart:
+5. Enable autostart at boot:
 
 ```bash
 systemctl --user enable --now dualsense-desktop
+sudo loginctl enable-linger $USER
 journalctl --user -u dualsense-desktop -f
+```
+
+Linger lets your user manager start at boot, so the mapper is already running at the login screen and right after login with no manual step. After updating the service file later, reapply with:
+
+```bash
+cp dualsense-desktop.service ~/.config/systemd/user/dualsense-desktop.service
+systemctl --user daemon-reload
+systemctl --user reenable dualsense-desktop
+systemctl --user restart dualsense-desktop
 ```
 
 ## Usage
