@@ -20,11 +20,11 @@ Mapping in desktop mode:
 | D-pad up / down | Up / Down arrow |
 | Cross (X) | Home / launcher (Super tap) |
 | Circle | Back (Alt+Left) |
-| Triangle | Close window (`hyprctl dispatch killactive`) |
+| Triangle | Close window (Super+Q plus `hyprctl dispatch killactive` fallback) |
 | Square | Forward (Alt+Right) |
 | R2 | Enter (press and hold supported) |
 | L2 | Switch apps (Alt-Tab, hold to cycle) |
-| PS button (short press) | Open opencode agent (`alacritty -e opencode`) |
+| PS button (short press) | Open default AI app (see Default AI app section) |
 | L3 + R3 together | Toggle mic mute (`wpctl`) |
 | PS + Options (hold 1s) | Toggle desktop / game mode |
 
@@ -90,7 +90,7 @@ sudo evtest
 ~/.local/bin/dualsense_desktop.py --debug
 ```
 
-You should see `grabbed (exclusive)`. Move the left stick and the cursor should move. Press R1 for click and PS to open opencode.
+You should see `grabbed (exclusive)`. Move the left stick and the cursor should move. Press R1 for click, Triangle to close the focused window, and PS to open your default AI app.
 
 5. Enable autostart:
 
@@ -122,7 +122,23 @@ Edit the top of `dualsense_desktop.py`:
 - `DEADZONE`: stick deadzone from 0 to 1
 - `TRACKPAD_SENS`: trackpad movement multiplier
 - `GAME_CLASSES`: Hyprland window classes treated as games for auto passthrough
-- `OPECODE_CMD`: command run on PS button press
+- `AI_CANDIDATES`: terminal AI binaries checked in order when no custom AI app is set
+
+## Default AI app
+
+The PS button opens whatever AI app is set as default on your system:
+
+1. If `~/.config/dualsense-omarchy/ai-app` exists, its content is used as the full Hyprland exec command. Example:
+
+```bash
+echo "uwsm-app alacritty -e opencode" > ~/.config/dualsense-omarchy/ai-app
+echo "uwsm-app alacritty -e claude" > ~/.config/dualsense-omarchy/ai-app
+```
+
+2. If that file is missing, the daemon checks `AI_CANDIDATES` in order (`opencode`, `claude`, `gemini`, `aider`, `codex`, `ollama`) and launches the first binary found on `PATH` inside alacritty.
+3. If none is found, it falls back to `uwsm-app alacritty -e opencode`.
+
+Set your preferred default once, then PS just works.
 
 Restart the service after edits:
 
