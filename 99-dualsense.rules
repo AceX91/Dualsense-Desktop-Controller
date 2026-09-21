@@ -1,0 +1,4 @@
+# DualSense (PS5 054c:0ce6 / Edge 054c:0df2) - allow user + uinput access
+KERNEL=="event*", SUBSYSTEM=="input", ATTRS{id/vendor}=="054c", ATTRS{id/product}=="0ce6", GROUP="input", MODE="0660", TAG+="uaccess"
+KERNEL=="event*", SUBSYSTEM=="input", ATTRS{id/vendor}=="054c", ATTRS{id/product}=="0df2", GROUP="input", MODE="0660", TAG+="uaccess"
+KERNEL=="uinput", GROUP="input", MODE="0660", TAG+="uaccess"
