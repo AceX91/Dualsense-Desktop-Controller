@@ -20,7 +20,7 @@ Mapping in desktop mode:
 | D-pad up / down | Up / Down arrow |
 | Cross (X) | Home / launcher (Super tap) |
 | Circle | Back (Alt+Left) |
-| Triangle | Close window (Super+Q plus `hyprctl dispatch killactive` fallback) |
+| Triangle | Close window (Super+W plus `hyprctl dispatch killactive` fallback) |
 | Square | Forward (Alt+Right) |
 | R2 | Enter (press and hold supported) |
 | L2 | Switch apps (Alt-Tab, hold to cycle) |

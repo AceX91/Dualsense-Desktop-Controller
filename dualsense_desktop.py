@@ -92,7 +92,7 @@ class Mapper:
                 ecodes.KEY_TAB, ecodes.KEY_ENTER, ecodes.KEY_ESC,
                 ecodes.KEY_UP, ecodes.KEY_DOWN, ecodes.KEY_LEFT, ecodes.KEY_RIGHT,
                 ecodes.KEY_LEFTALT, ecodes.KEY_LEFTSHIFT, ecodes.KEY_LEFTMETA,
-                ecodes.KEY_Q, ecodes.KEY_F20,
+                ecodes.KEY_Q, ecodes.KEY_W, ecodes.KEY_F20,
             ],
         }
         self.ui_mouse = UInput(mouse_caps, name="dualsense-virtual-mouse")
@@ -138,7 +138,7 @@ class Mapper:
         self.tap(ecodes.KEY_LEFTALT, ecodes.KEY_LEFT)
     def do_close(self):
         self.log("Triangle -> Close window")
-        self.tap(ecodes.KEY_LEFTMETA, ecodes.KEY_Q)
+        self.tap(ecodes.KEY_LEFTMETA, ecodes.KEY_W)
         run(["hyprctl", "dispatch", "killactive"])
     def do_forward(self):
         self.log("Square -> Forward")
