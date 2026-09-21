@@ -22,7 +22,8 @@ Mapping in desktop mode:
 | D-pad left / right | Shift+Tab / Tab (focus hop) |
 | D-pad up / down | Up / Down arrow |
 | Cross (X) | Home / launcher (Super tap) |
-| Circle | Back (Alt+Left) |
+| Circle (tap) | Back (Alt+Left) |
+| Circle (hold 0.8s) | Open terminal (first found: ghostty, alacritty, kitty, foot) |
 | Triangle | Close window (Super+W plus `hyprctl dispatch killactive` fallback) |
 | Square | Forward (Alt+Right) |
 | R2 | Enter (press and hold supported) |
@@ -138,6 +139,7 @@ Edit the top of `dualsense_desktop.py`:
 - `TRACKPAD_SENS`: trackpad movement multiplier
 - `GAME_CLASSES`: Hyprland window classes treated as games for auto passthrough
 - `CHROMIUM_CMD`: command run on PS hold (defaults to `uwsm-app chromium`)
+- `TERMINAL_CANDIDATES`: terminal binaries checked in order on Circle hold (defaults to ghostty, alacritty, kitty, foot)
 
 ## PS button
 

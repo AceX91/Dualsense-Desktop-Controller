@@ -3,6 +3,7 @@ import argparse
 import asyncio
 import json
 import math
+import shutil
 import subprocess
 import sys
 import time
@@ -16,6 +17,12 @@ GAME_CLASSES = {
 }
 HIDDEN_FILE = Path.home() / ".config" / "dualsense-omarchy" / "hidden.json"
 CHROMIUM_CMD = ["hyprctl", "dispatch", "exec", "uwsm-app chromium"]
+TERMINAL_CANDIDATES = ["ghostty", "alacritty", "kitty", "foot"]
+def resolve_term_cmd():
+    for bin in TERMINAL_CANDIDATES:
+        if shutil.which(bin):
+            return ["hyprctl", "dispatch", "exec", f"uwsm-app {bin}"]
+    return ["hyprctl", "dispatch", "exec", "uwsm-app alacritty"]
 MAX_SPEED = 1400.0
 DEADZONE = 0.12
 TRACKPAD_SENS = 1.4
@@ -105,6 +112,8 @@ class Mapper:
         self.l3 = self.r3 = False
         self.ps_down_at = None
         self._ps_ai_fired = False
+        self.circle_down_at = None
+        self._circle_term_fired = False
         self.options_down = False
         self.mode_override = self.read_mode_file()
         self.in_game = False
@@ -203,6 +212,9 @@ class Mapper:
     def do_chromium(self):
         self.log("PS hold -> open chromium")
         run(CHROMIUM_CMD)
+    def do_terminal(self):
+        self.log("Circle hold -> terminal")
+        run(resolve_term_cmd())
     def do_app_menu(self):
         self.log("PS short -> win+space")
         self.tap(ecodes.KEY_LEFTMETA, ecodes.KEY_SPACE)
@@ -211,6 +223,11 @@ class Mapper:
             if time.time() - self.ps_down_at >= 0.75:
                 self._ps_ai_fired = True
                 self.do_chromium()
+    def fire_term_on_hold(self):
+        if self.circle_down_at and not self._circle_term_fired:
+            if time.time() - self.circle_down_at >= 0.75:
+                self._circle_term_fired = True
+                self.do_terminal()
     def toggle_mode(self):
         self.in_game = not self.in_game
         self.log("mode toggled ->", "GAME (passthrough)" if self.in_game else "DESKTOP")
@@ -274,8 +291,15 @@ class Mapper:
             self.mouse_btn(E_.BTN_RIGHT, 1 if pressed else 0)
         elif ev.code == E_.BTN_SOUTH and pressed:
             self.do_home()
-        elif ev.code == E_.BTN_EAST and pressed:
-            self.do_back()
+        elif ev.code == E_.BTN_EAST:
+            if pressed:
+                self.circle_down_at = time.time()
+                self._circle_term_fired = False
+                asyncio.get_running_loop().call_later(0.8, self.fire_term_on_hold)
+            else:
+                if not self._circle_term_fired and self.circle_down_at and time.time() - self.circle_down_at < 0.8:
+                    self.do_back()
+                self.circle_down_at = None
         elif ev.code == E_.BTN_NORTH and pressed:
             self.do_close()
         elif ev.code == E_.BTN_WEST and pressed:
